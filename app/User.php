@@ -44,4 +44,8 @@ class User extends Authenticatable
     public function getBearerAttribute() {
         return $this->createToken('PAT')->accessToken;
     }
+
+    public function pages() {
+        return $this->hasMany(\App\Page::class);
+    }
 }

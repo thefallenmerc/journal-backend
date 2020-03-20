@@ -13,16 +13,16 @@ class AuthController extends Controller
     {
         if (Auth::attempt($request->validated())) {
             return response()->json([
-                'message' => 'Success',
+                'message' => 'Login Successful!',
                 'user' => new UserAuthResource(auth()->user())
             ]);
         } else {
             return response()->json([
                 'message' => 'Invalid credentials!',
                 'errors' => [
-                    'password' => 'The given password is incorrect.'
+                    'password' => ['The given password is incorrect.']
                 ]
-            ], 401);
+            ], 422);
         }
     }
 }

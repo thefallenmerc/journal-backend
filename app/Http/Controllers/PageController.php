@@ -2,84 +2,50 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CreatePageRequest;
+use App\Http\Resources\PageResource;
 use App\Page;
-use Illuminate\Http\Request;
+use DateTime;
 
 class PageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+
+    function __construct()
     {
-        //
+        date_default_timezone_set('Asia/Kolkata');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+    private function dated() {
+        return now()->format('Y-m-d');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
+    public function index() {
+        if(!auth()->user()->pages()->whereDated($this->dated())->exists()) {
+            $page = new Page();
+            $page->title = '';
+            $page->content = '';
+            $page->dated = $this->dated();
+            auth()->user()->pages()->save($page);
+        }
+        $pages = auth()->user()->pages;
+        return response()->json([
+            'message' => 'Page fetch successful!',
+            'pages' => PageResource::collection(auth()->user()->pages()->orderBy('dated', 'desc')->get())
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Page  $page
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Page $page)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Page  $page
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Page $page)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Page  $page
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Page $page)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Page  $page
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Page $page)
-    {
-        //
+    public function save(CreatePageRequest $request) {
+        $page = auth()->user()->pages()->where('dated', $this->dated())->first();
+        if($page) {
+            $page->update($request->validated());
+        } else {
+            $page = $request->validated();
+            $page['dated'] = $this->dated();
+            $page = auth()->user()->pages()->save(new Page($page));
+        }
+        return response()->json([
+            'message' => 'Page saved successfully!',
+            'page' => new PageResource($page)
+        ]);
     }
 }
